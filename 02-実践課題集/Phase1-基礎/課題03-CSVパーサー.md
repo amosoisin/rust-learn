@@ -511,136 +511,133 @@ fn save_users(users: &[User], filename: &str) -> Result<(), String> {
 
 ---
 
-<details>
-<summary>📝 完全な解答例を見る（実装後に確認）</summary>
-
-```rust
-use std::env;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-
-#[derive(Debug)]
-struct User {
-    id: u32,
-    name: String,
-    age: u32,
-    city: String,
-}
-
-impl User {
-    fn from_csv_line(line: &str) -> Result<User, String> {
-        let fields: Vec<&str> = line.split(',').collect();
-
-        if fields.len() != 4 {
-            return Err(String::from("Invalid CSV format: expected 4 fields"));
-        }
-
-        Ok(User {
-            id: fields[0].parse().map_err(|_| "Invalid ID")?,
-            name: fields[1].to_string(),
-            age: fields[2].parse().map_err(|_| "Invalid age")?,
-            city: fields[3].to_string(),
-        })
-    }
-
-    fn display(&self) {
-        println!("{:<3} | {:<6} | {:<3} | {}",
-                 self.id, self.name, self.age, self.city);
-    }
-}
-
-fn load_users(filename: &str) -> Result<Vec<User>, String> {
-    let file = File::open(filename)
-        .map_err(|e| format!("Failed to open file: {}", e))?;
-
-    let reader = BufReader::new(file);
-    let mut users = Vec::new();
-
-    for (i, line) in reader.lines().enumerate() {
-        if i == 0 {
-            continue;  // ヘッダー行をスキップ
-        }
-
-        let line = line.map_err(|e| format!("Failed to read line: {}", e))?;
-        let user = User::from_csv_line(&line)?;
-        users.push(user);
-    }
-
-    Ok(users)
-}
-
-fn filter_by_city<'a>(users: &'a [User], city: &str) -> Vec<&'a User> {
-    users.iter()
-        .filter(|u| u.city == city)
-        .collect()
-}
-
-fn calculate_average_age(users: &[User]) -> f64 {
-    if users.is_empty() {
-        return 0.0;
-    }
-
-    let sum: u32 = users.iter().map(|u| u.age).sum();
-    sum as f64 / users.len() as f64
-}
-
-fn main() {
-    let args: Vec<String> = env::args().collect();
-
-    if args.len() < 3 {
-        eprintln!("Usage: csv_parser <command> <filename> [options]");
-        eprintln!("Commands:");
-        eprintln!("  show <filename>              - すべてのデータを表示");
-        eprintln!("  filter <filename> <city>     - 都市でフィルタリング");
-        eprintln!("  average <filename>           - 年齢の平均を計算");
-        std::process::exit(1);
-    }
-
-    let command = &args[1];
-    let filename = &args[2];
-
-    let users = match load_users(filename) {
-        Ok(u) => u,
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            std::process::exit(1);
-        }
-    };
-
-    match command.as_str() {
-        "show" => {
-            println!("{:<3} | {:<6} | {:<3} | {}", "ID", "Name", "Age", "City");
-            for user in &users {
-                user.display();
-            }
-        }
-        "filter" => {
-            if args.len() < 4 {
-                eprintln!("Usage: csv_parser filter <filename> <city>");
-                std::process::exit(1);
-            }
-            let city = &args[3];
-            let filtered = filter_by_city(&users, city);
-
-            println!("{:<3} | {:<6} | {:<3} | {}", "ID", "Name", "Age", "City");
-            for user in filtered {
-                user.display();
-            }
-        }
-        "average" => {
-            let avg = calculate_average_age(&users);
-            println!("Average age: {:.1}", avg);
-        }
-        _ => {
-            eprintln!("Unknown command: {}", command);
-            eprintln!("Available commands: show, filter, average");
-            std::process::exit(1);
-        }
-    }
-}
-```
-
-</details>
+> [!note]- 📝 完全な解答例を見る（実装後に確認）
+>
+> ```rust
+> use std::env;
+> use std::fs::File;
+> use std::io::{BufRead, BufReader};
+>
+> #[derive(Debug)]
+> struct User {
+>     id: u32,
+>     name: String,
+>     age: u32,
+>     city: String,
+> }
+>
+> impl User {
+>     fn from_csv_line(line: &str) -> Result<User, String> {
+>         let fields: Vec<&str> = line.split(',').collect();
+>
+>         if fields.len() != 4 {
+>             return Err(String::from("Invalid CSV format: expected 4 fields"));
+>         }
+>
+>         Ok(User {
+>             id: fields[0].parse().map_err(|_| "Invalid ID")?,
+>             name: fields[1].to_string(),
+>             age: fields[2].parse().map_err(|_| "Invalid age")?,
+>             city: fields[3].to_string(),
+>         })
+>     }
+>
+>     fn display(&self) {
+>         println!("{:<3} | {:<6} | {:<3} | {}",
+>                  self.id, self.name, self.age, self.city);
+>     }
+> }
+>
+> fn load_users(filename: &str) -> Result<Vec<User>, String> {
+>     let file = File::open(filename)
+>         .map_err(|e| format!("Failed to open file: {}", e))?;
+>
+>     let reader = BufReader::new(file);
+>     let mut users = Vec::new();
+>
+>     for (i, line) in reader.lines().enumerate() {
+>         if i == 0 {
+>             continue;  // ヘッダー行をスキップ
+>         }
+>
+>         let line = line.map_err(|e| format!("Failed to read line: {}", e))?;
+>         let user = User::from_csv_line(&line)?;
+>         users.push(user);
+>     }
+>
+>     Ok(users)
+> }
+>
+> fn filter_by_city<'a>(users: &'a [User], city: &str) -> Vec<&'a User> {
+>     users.iter()
+>         .filter(|u| u.city == city)
+>         .collect()
+> }
+>
+> fn calculate_average_age(users: &[User]) -> f64 {
+>     if users.is_empty() {
+>         return 0.0;
+>     }
+>
+>     let sum: u32 = users.iter().map(|u| u.age).sum();
+>     sum as f64 / users.len() as f64
+> }
+>
+> fn main() {
+>     let args: Vec<String> = env::args().collect();
+>
+>     if args.len() < 3 {
+>         eprintln!("Usage: csv_parser <command> <filename> [options]");
+>         eprintln!("Commands:");
+>         eprintln!("  show <filename>              - すべてのデータを表示");
+>         eprintln!("  filter <filename> <city>     - 都市でフィルタリング");
+>         eprintln!("  average <filename>           - 年齢の平均を計算");
+>         std::process::exit(1);
+>     }
+>
+>     let command = &args[1];
+>     let filename = &args[2];
+>
+>     let users = match load_users(filename) {
+>         Ok(u) => u,
+>         Err(e) => {
+>             eprintln!("Error: {}", e);
+>             std::process::exit(1);
+>         }
+>     };
+>
+>     match command.as_str() {
+>         "show" => {
+>             println!("{:<3} | {:<6} | {:<3} | {}", "ID", "Name", "Age", "City");
+>             for user in &users {
+>                 user.display();
+>             }
+>         }
+>         "filter" => {
+>             if args.len() < 4 {
+>                 eprintln!("Usage: csv_parser filter <filename> <city>");
+>                 std::process::exit(1);
+>             }
+>             let city = &args[3];
+>             let filtered = filter_by_city(&users, city);
+>
+>             println!("{:<3} | {:<6} | {:<3} | {}", "ID", "Name", "Age", "City");
+>             for user in filtered {
+>                 user.display();
+>             }
+>         }
+>         "average" => {
+>             let avg = calculate_average_age(&users);
+>             println!("Average age: {:.1}", avg);
+>         }
+>         _ => {
+>             eprintln!("Unknown command: {}", command);
+>             eprintln!("Available commands: show, filter, average");
+>             std::process::exit(1);
+>         }
+>     }
+> }
+> ```
 
 ---
 

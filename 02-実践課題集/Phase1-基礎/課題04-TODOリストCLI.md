@@ -593,177 +593,174 @@ $ cargo run -- edit 1 "新しいタスク内容"
 
 ---
 
-<details>
-<summary>📝 完全な解答例を見る（実装後に確認）</summary>
-
-```rust
-use serde::{Deserialize, Serialize};
-use std::env;
-use std::fs;
-use std::path::Path;
-
-const DATA_FILE: &str = "todos.json";
-
-#[derive(Debug, Serialize, Deserialize)]
-struct TodoItem {
-    id: usize,
-    task: String,
-    completed: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct TodoList {
-    items: Vec<TodoItem>,
-    next_id: usize,
-}
-
-impl TodoList {
-    fn new() -> Self {
-        TodoList {
-            items: Vec::new(),
-            next_id: 1,
-        }
-    }
-
-    fn add(&mut self, task: String) -> &TodoItem {
-        let item = TodoItem {
-            id: self.next_id,
-            task,
-            completed: false,
-        };
-        self.items.push(item);
-        self.next_id += 1;
-        self.items.last().unwrap()
-    }
-
-    fn complete(&mut self, id: usize) -> Option<&TodoItem> {
-        self.items.iter_mut()
-            .find(|item| item.id == id)
-            .map(|item| {
-                item.completed = true;
-                &*item
-            })
-    }
-
-    fn remove(&mut self, id: usize) -> Option<TodoItem> {
-        self.items.iter()
-            .position(|item| item.id == id)
-            .map(|index| self.items.remove(index))
-    }
-
-    fn list(&self) {
-        if self.items.is_empty() {
-            println!("No tasks!");
-            return;
-        }
-
-        for item in &self.items {
-            let status = if item.completed { "x" } else { " " };
-            println!("{}. [{}] {}", item.id, status, item.task);
-        }
-    }
-}
-
-fn load_todos() -> Result<TodoList, String> {
-    if !Path::new(DATA_FILE).exists() {
-        return Ok(TodoList::new());
-    }
-
-    let contents = fs::read_to_string(DATA_FILE)
-        .map_err(|e| format!("Failed to read file: {}", e))?;
-
-    serde_json::from_str(&contents)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))
-}
-
-fn save_todos(todos: &TodoList) -> Result<(), String> {
-    let json = serde_json::to_string_pretty(todos)
-        .map_err(|e| format!("Failed to serialize: {}", e))?;
-
-    fs::write(DATA_FILE, json)
-        .map_err(|e| format!("Failed to write file: {}", e))
-}
-
-fn main() {
-    let args: Vec<String> = env::args().collect();
-
-    if args.len() < 2 {
-        eprintln!("Usage: todo_cli <command> [args]");
-        eprintln!("Commands:");
-        eprintln!("  add <task>    - TODOを追加");
-        eprintln!("  list          - すべてのTODOを表示");
-        eprintln!("  done <id>     - TODOを完了にする");
-        eprintln!("  remove <id>   - TODOを削除");
-        std::process::exit(1);
-    }
-
-    let mut todos = match load_todos() {
-        Ok(t) => t,
-        Err(e) => {
-            eprintln!("Error loading todos: {}", e);
-            std::process::exit(1);
-        }
-    };
-
-    let command = &args[1];
-
-    match command.as_str() {
-        "add" => {
-            if args.len() < 3 {
-                eprintln!("Usage: todo_cli add <task>");
-                std::process::exit(1);
-            }
-            let task = args[2..].join(" ");
-            let item = todos.add(task);
-            println!("Added: {}", item.task);
-        }
-        "list" => {
-            todos.list();
-        }
-        "done" => {
-            if args.len() < 3 {
-                eprintln!("Usage: todo_cli done <id>");
-                std::process::exit(1);
-            }
-            let id: usize = args[2].parse().unwrap_or_else(|_| {
-                eprintln!("Invalid ID");
-                std::process::exit(1);
-            });
-
-            match todos.complete(id) {
-                Some(item) => println!("Completed: {}", item.task),
-                None => eprintln!("Task {} not found", id),
-            }
-        }
-        "remove" => {
-            if args.len() < 3 {
-                eprintln!("Usage: todo_cli remove <id>");
-                std::process::exit(1);
-            }
-            let id: usize = args[2].parse().unwrap_or_else(|_| {
-                eprintln!("Invalid ID");
-                std::process::exit(1);
-            });
-
-            match todos.remove(id) {
-                Some(item) => println!("Removed: {}", item.task),
-                None => eprintln!("Task {} not found", id),
-            }
-        }
-        _ => {
-            eprintln!("Unknown command: {}", command);
-            std::process::exit(1);
-        }
-    }
-
-    if let Err(e) = save_todos(&todos) {
-        eprintln!("Error saving todos: {}", e);
-        std::process::exit(1);
-    }
-}
-```
-
-</details>
+> [!note]- 📝 完全な解答例を見る（実装後に確認）
+>
+> ```rust
+> use serde::{Deserialize, Serialize};
+> use std::env;
+> use std::fs;
+> use std::path::Path;
+>
+> const DATA_FILE: &str = "todos.json";
+>
+> #[derive(Debug, Serialize, Deserialize)]
+> struct TodoItem {
+>     id: usize,
+>     task: String,
+>     completed: bool,
+> }
+>
+> #[derive(Debug, Serialize, Deserialize)]
+> struct TodoList {
+>     items: Vec<TodoItem>,
+>     next_id: usize,
+> }
+>
+> impl TodoList {
+>     fn new() -> Self {
+>         TodoList {
+>             items: Vec::new(),
+>             next_id: 1,
+>         }
+>     }
+>
+>     fn add(&mut self, task: String) -> &TodoItem {
+>         let item = TodoItem {
+>             id: self.next_id,
+>             task,
+>             completed: false,
+>         };
+>         self.items.push(item);
+>         self.next_id += 1;
+>         self.items.last().unwrap()
+>     }
+>
+>     fn complete(&mut self, id: usize) -> Option<&TodoItem> {
+>         self.items.iter_mut()
+>             .find(|item| item.id == id)
+>             .map(|item| {
+>                 item.completed = true;
+>                 &*item
+>             })
+>     }
+>
+>     fn remove(&mut self, id: usize) -> Option<TodoItem> {
+>         self.items.iter()
+>             .position(|item| item.id == id)
+>             .map(|index| self.items.remove(index))
+>     }
+>
+>     fn list(&self) {
+>         if self.items.is_empty() {
+>             println!("No tasks!");
+>             return;
+>         }
+>
+>         for item in &self.items {
+>             let status = if item.completed { "x" } else { " " };
+>             println!("{}. [{}] {}", item.id, status, item.task);
+>         }
+>     }
+> }
+>
+> fn load_todos() -> Result<TodoList, String> {
+>     if !Path::new(DATA_FILE).exists() {
+>         return Ok(TodoList::new());
+>     }
+>
+>     let contents = fs::read_to_string(DATA_FILE)
+>         .map_err(|e| format!("Failed to read file: {}", e))?;
+>
+>     serde_json::from_str(&contents)
+>         .map_err(|e| format!("Failed to parse JSON: {}", e))
+> }
+>
+> fn save_todos(todos: &TodoList) -> Result<(), String> {
+>     let json = serde_json::to_string_pretty(todos)
+>         .map_err(|e| format!("Failed to serialize: {}", e))?;
+>
+>     fs::write(DATA_FILE, json)
+>         .map_err(|e| format!("Failed to write file: {}", e))
+> }
+>
+> fn main() {
+>     let args: Vec<String> = env::args().collect();
+>
+>     if args.len() < 2 {
+>         eprintln!("Usage: todo_cli <command> [args]");
+>         eprintln!("Commands:");
+>         eprintln!("  add <task>    - TODOを追加");
+>         eprintln!("  list          - すべてのTODOを表示");
+>         eprintln!("  done <id>     - TODOを完了にする");
+>         eprintln!("  remove <id>   - TODOを削除");
+>         std::process::exit(1);
+>     }
+>
+>     let mut todos = match load_todos() {
+>         Ok(t) => t,
+>         Err(e) => {
+>             eprintln!("Error loading todos: {}", e);
+>             std::process::exit(1);
+>         }
+>     };
+>
+>     let command = &args[1];
+>
+>     match command.as_str() {
+>         "add" => {
+>             if args.len() < 3 {
+>                 eprintln!("Usage: todo_cli add <task>");
+>                 std::process::exit(1);
+>             }
+>             let task = args[2..].join(" ");
+>             let item = todos.add(task);
+>             println!("Added: {}", item.task);
+>         }
+>         "list" => {
+>             todos.list();
+>         }
+>         "done" => {
+>             if args.len() < 3 {
+>                 eprintln!("Usage: todo_cli done <id>");
+>                 std::process::exit(1);
+>             }
+>             let id: usize = args[2].parse().unwrap_or_else(|_| {
+>                 eprintln!("Invalid ID");
+>                 std::process::exit(1);
+>             });
+>
+>             match todos.complete(id) {
+>                 Some(item) => println!("Completed: {}", item.task),
+>                 None => eprintln!("Task {} not found", id),
+>             }
+>         }
+>         "remove" => {
+>             if args.len() < 3 {
+>                 eprintln!("Usage: todo_cli remove <id>");
+>                 std::process::exit(1);
+>             }
+>             let id: usize = args[2].parse().unwrap_or_else(|_| {
+>                 eprintln!("Invalid ID");
+>                 std::process::exit(1);
+>             });
+>
+>             match todos.remove(id) {
+>                 Some(item) => println!("Removed: {}", item.task),
+>                 None => eprintln!("Task {} not found", id),
+>             }
+>         }
+>         _ => {
+>             eprintln!("Unknown command: {}", command);
+>             std::process::exit(1);
+>         }
+>     }
+>
+>     if let Err(e) = save_todos(&todos) {
+>         eprintln!("Error saving todos: {}", e);
+>         std::process::exit(1);
+>     }
+> }
+> ```
 
 ---
 
