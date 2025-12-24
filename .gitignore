@@ -1,0 +1,32 @@
+# Rust
+target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# Obsidian
+.obsidian/workspace
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.bak
+
+# Temporary files
+*.tmp
+*.log
